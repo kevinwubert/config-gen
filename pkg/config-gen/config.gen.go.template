@@ -1,0 +1,82 @@
+package {{ .PackageName }}
+
+import (
+    "flag"
+    "os"
+	"strconv"
+	"time"
+)
+
+func GetConfig(defaultConfig *Config) *Config {
+	cfg := &Config{}
+	{{ range .Fields -}}
+        {{- if eq .Type "string" }}
+	flag.StringVar(&cfg.{{ .Name.PascalCase }}, "{{ .Name.KebabCase }}", LookupEnvOrString("{{ .Name.ScreamingSnakeCase }}", defaultConfig.{{ .Name.PascalCase }}), "{{ .Description }}")
+        {{- end -}}
+        {{- if eq .Type "int" }}
+	flag.IntVar(&cfg.{{ .Name.PascalCase }}, "{{ .Name.KebabCase }}", LookupEnvOrInt("{{ .Name.ScreamingSnakeCase }}", defaultConfig.{{ .Name.PascalCase }}), "{{ .Description }}")
+        {{- end -}}
+        {{- if eq .Type "bool" }}
+	flag.BoolVar(&cfg.{{ .Name.PascalCase }}, "{{ .Name.KebabCase }}", LookupEnvOrBool("{{ .Name.ScreamingSnakeCase }}", defaultConfig.{{ .Name.PascalCase }}), "{{ .Description }}")
+        {{- end -}}
+        {{- if eq .Type "duration" }}
+	flag.DurationVar(&cfg.{{ .Name.PascalCase }}, "{{ .Name.KebabCase }}", LookupEnvOrDuration("{{ .Name.ScreamingSnakeCase }}", defaultConfig.{{ .Name.PascalCase }}), "{{ .Description }}")
+        {{- end -}}
+    {{- end }}
+    
+	flag.Parse()
+
+	return cfg
+}
+
+{{ if .HasFieldTypes.HasString -}}
+func LookupEnvOrString(key string, defaultVal string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return val
+	}
+	return defaultVal
+}
+{{- end }}
+
+{{ if .HasFieldTypes.HasInt -}}
+func LookupEnvOrInt(key string, defaultVal int) int {
+	if val, ok := os.LookupEnv(key); ok {
+		i, err := strconv.Atoi(val)
+		if err != nil {
+			return defaultVal
+		}
+		return i
+	}
+	return defaultVal
+}
+{{- end }}
+
+{{ if .HasFieldTypes.HasBool -}}
+func LookupEnvOrBool(key string, defaultVal bool) bool {
+	if val, ok := os.LookupEnv(key); ok {
+		b, err := strconv.ParseBool(val)
+		if err != nil {
+			return defaultVal
+		}
+		return b
+	}
+	return defaultVal
+}
+{{- end }}
+
+{{ if .HasFieldTypes.HasDuration -}}
+func LookupEnvOrDuration(key string, defaultVal time.Duration) time.Duration {
+	if val, ok := os.LookupEnv(key); ok {
+		d, err := time.ParseDuration(val)
+		if err != nil {
+			return defaultVal
+		}
+		return d
+	}
+	return defaultVal
+}
+{{- end }}
+
+func (cfg *Config) String() string {
+	return "TODO"
+}
