@@ -2,9 +2,14 @@ package {{ .PackageName }}
 
 import (
     "flag"
+	"fmt"
     "os"
+	{{ if or .HasFieldTypes.HasInt .HasFieldTypes.HasBool -}}
 	"strconv"
+	{{- end }}
+	{{- if .HasFieldTypes.HasDuration -}}
 	"time"
+	{{- end }}
 )
 
 func GetConfig(defaultConfig *Config) *Config {
@@ -37,7 +42,6 @@ func LookupEnvOrString(key string, defaultVal string) string {
 	return defaultVal
 }
 {{- end }}
-
 {{ if .HasFieldTypes.HasInt -}}
 func LookupEnvOrInt(key string, defaultVal int) int {
 	if val, ok := os.LookupEnv(key); ok {
@@ -50,7 +54,6 @@ func LookupEnvOrInt(key string, defaultVal int) int {
 	return defaultVal
 }
 {{- end }}
-
 {{ if .HasFieldTypes.HasBool -}}
 func LookupEnvOrBool(key string, defaultVal bool) bool {
 	if val, ok := os.LookupEnv(key); ok {
@@ -63,7 +66,6 @@ func LookupEnvOrBool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 {{- end }}
-
 {{ if .HasFieldTypes.HasDuration -}}
 func LookupEnvOrDuration(key string, defaultVal time.Duration) time.Duration {
 	if val, ok := os.LookupEnv(key); ok {
@@ -78,5 +80,25 @@ func LookupEnvOrDuration(key string, defaultVal time.Duration) time.Duration {
 {{- end }}
 
 func (cfg *Config) String() string {
-	return "TODO"
+	output := "Config {\n"
+	{{ range .Fields -}}
+		{{- if not .IsSecret }}
+			{{- if eq .Type "string" }}
+	output += fmt.Sprintf("\t%s: %s,\n", "{{ .Name.PascalCase }}", cfg.{{ .Name.PascalCase }})
+			{{- end -}}
+			{{- if eq .Type "int" }}
+	output += fmt.Sprintf("\t%s: %d,\n", "{{ .Name.PascalCase }}", cfg.{{ .Name.PascalCase }})
+			{{- end -}}
+			{{- if eq .Type "bool" }}
+	output += fmt.Sprintf("\t%s: %t,\n", "{{ .Name.PascalCase }}", cfg.{{ .Name.PascalCase }})
+			{{- end -}}
+			{{- if eq .Type "duration" }}
+	output += fmt.Sprintf("\t%s: %s,\n", "{{ .Name.PascalCase }}", cfg.{{ .Name.PascalCase }}.String())
+			{{- end -}}
+		{{ end -}}
+    {{- end }}
+
+	output += "}"
+	
+	return output
 }

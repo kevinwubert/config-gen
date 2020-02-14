@@ -9,11 +9,9 @@ import (
 
 //go:generate config-gen --type Config --prefix
 type Config struct {
-	Filename string        `description:"filename blah blah" secret:"true"`
-	Prefix   string        `description:"prefix blah blah" secret:"true"`
-	Number   int           `description:"nunmber blah blah" secret:"true"`
-	Boolean  bool          `description:"bool blah blah" secret:"true"`
-	Duration time.Duration `description:"dur blah blah" secret:"true"`
+	Filename string        `description:"filename blah blah" secret:"false"`
+	Prefix   string        `description:"prefix blah blah" secret:"false"`
+	Number   time.Duration `description:"nunmber blah blah" secret:"true"`
 }
 
 var defaultConfig = Config{
@@ -28,4 +26,6 @@ func main() {
 	if err != nil {
 		log.WithError(err).Error("error generating config.gen.go")
 	}
+
+	log.Infof(cfg.String())
 }

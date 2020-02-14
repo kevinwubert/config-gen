@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"text/template"
 
 	"github.com/iancoleman/strcase"
@@ -69,10 +70,10 @@ func Parse(filename string, prefix string) (Data, error) {
 		PackageName: "main",
 		Fields:      []Field{},
 		HasFieldTypes: HasFieldTypes{
-			HasString:   true,
-			HasInt:      true,
-			HasBool:     true,
-			HasDuration: true,
+			HasString:   false,
+			HasInt:      false,
+			HasBool:     false,
+			HasDuration: false,
 		},
 	}
 
@@ -91,12 +92,21 @@ func Parse(filename string, prefix string) (Data, error) {
 			switch fmt.Sprintf("%s", field.Type) {
 			case "string":
 				fieldType = "string"
+				d.HasFieldTypes.HasString = true
 			case "int":
 				fieldType = "int"
+				d.HasFieldTypes.HasInt = true
 			case "bool":
 				fieldType = "bool"
+				d.HasFieldTypes.HasBool = true
 			case "&{time Duration}":
 				fieldType = "duration"
+				d.HasFieldTypes.HasDuration = true
+			}
+
+			isSecret, err := strconv.ParseBool(tag.Get("secret"))
+			if err != nil {
+				isSecret = false
 			}
 
 			d.Fields = append(d.Fields, Field{
@@ -107,6 +117,7 @@ func Parse(filename string, prefix string) (Data, error) {
 				},
 				Type:        fieldType,
 				Description: tag.Get("description"),
+				IsSecret:    isSecret,
 			})
 		}
 		return false
